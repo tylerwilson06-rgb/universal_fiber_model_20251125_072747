@@ -103,6 +103,90 @@ def main():
         print(f"  Error: {e}")
     print()
     
+    # Example 5: Universal Mode - Different Sampling Rate
+    print("=" * 60)
+    print("Example 5: Universal Mode - Different Sampling Rate (5kHz)")
+    print("=" * 60)
+    try:
+        signal_5khz = np.random.randn(5000)  # 5kHz, 1 second
+        prediction = model.predict_universal(signal_5khz, original_sampling_rate=5000)
+        
+        print(f"  Event Type: {prediction['event_type']}")
+        print(f"  Event Confidence: {prediction['event_confidence']:.2%}")
+        print(f"  Risk Score: {prediction['risk_score']:.2%}")
+        print(f"  Note: Signal automatically resampled from 5kHz to 10kHz")
+    except Exception as e:
+        print(f"  Error: {e}")
+    print()
+    
+    # Example 6: Universal Mode - Very Short Signal
+    print("=" * 60)
+    print("Example 6: Universal Mode - Very Short Signal")
+    print("=" * 60)
+    try:
+        short_signal = np.random.randn(100)  # Very short
+        prediction, info = model.predict_universal(
+            short_signal, 
+            original_sampling_rate=1000,
+            return_preprocessing_info=True
+        )
+        
+        print(f"  Event Type: {prediction['event_type']}")
+        print(f"  Risk Score: {prediction['risk_score']:.2%}")
+        print(f"  Preprocessing Info:")
+        print(f"    - Original length: {info['original_shape'][0]} samples")
+        print(f"    - Processed length: {info['processed_shape'][0]} samples")
+        print(f"    - Length ratio: {info['length_ratio']:.2f}")
+        if info['warnings']:
+            print(f"    - Warnings: {', '.join(info['warnings'])}")
+    except Exception as e:
+        print(f"  Error: {e}")
+    print()
+    
+    # Example 7: Universal Mode - Very Long Signal
+    print("=" * 60)
+    print("Example 7: Universal Mode - Very Long Signal")
+    print("=" * 60)
+    try:
+        long_signal = np.random.randn(50000)  # Very long (5 seconds at 10kHz)
+        prediction, info = model.predict_universal(
+            long_signal,
+            original_sampling_rate=10000,
+            return_preprocessing_info=True
+        )
+        
+        print(f"  Event Type: {prediction['event_type']}")
+        print(f"  Risk Score: {prediction['risk_score']:.2%}")
+        print(f"  Preprocessing Info:")
+        print(f"    - Original length: {info['original_shape'][0]} samples")
+        print(f"    - Processed length: {info['processed_shape'][0]} samples")
+        print(f"    - Length ratio: {info['length_ratio']:.2f}")
+        if info['warnings']:
+            print(f"    - Warnings: {', '.join(info['warnings'])}")
+    except Exception as e:
+        print(f"  Error: {e}")
+    print()
+    
+    # Example 8: Universal Batch Mode
+    print("=" * 60)
+    print("Example 8: Universal Batch Mode (Different Rates/Lengths)")
+    print("=" * 60)
+    try:
+        signals = [
+            np.random.randn(5000),   # 5kHz
+            np.random.randn(20000),  # 20kHz
+            np.random.randn(10000),  # 10kHz
+        ]
+        rates = [5000, 20000, 10000]
+        predictions = model.predict_batch_universal(signals, original_sampling_rates=rates)
+        
+        for i, (pred, rate) in enumerate(zip(predictions, rates)):
+            print(f"  Signal {i+1} ({rate}Hz): {pred['event_type']} "
+                  f"(Risk: {pred['risk_score']:.2%})")
+    except Exception as e:
+        print(f"  Error: {e}")
+    print()
+    
     print("=" * 60)
     print("All examples completed successfully!")
     print("=" * 60)

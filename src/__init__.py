@@ -19,6 +19,10 @@ from src.model_architecture import (
     MultiHeadClassifier,
     UniversalFiberSensorModel
 )
+from src.signal_preprocessing import (
+    UniversalSignalPreprocessor,
+    AdaptiveFeatureAggregator
+)
 from src.inference import FiberSensorInference
 
 __all__ = [
@@ -28,5 +32,7 @@ __all__ = [
     'FusionLayer',
     'MultiHeadClassifier',
     'UniversalFiberSensorModel',
+    'UniversalSignalPreprocessor',
+    'AdaptiveFeatureAggregator',
     'FiberSensorInference',
 ]

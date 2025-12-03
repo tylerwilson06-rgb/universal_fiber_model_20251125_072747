@@ -69,3 +69,12 @@ temp/
 Thumbs.db
 .DS_Store
 
+# GitHub setup helper files (keep locally, don't push to GitHub)
+GITHUB_SETUP_GUIDE.md
+GITHUB_READY.md
+QUICK_START_GITHUB.md
+push_to_github.ps1
+push_to_github.bat
+WHY_EMPTY_AND_HOW_TO_FIX.md
+EXTENDED_README.md
+

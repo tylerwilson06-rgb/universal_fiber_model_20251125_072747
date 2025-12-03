@@ -9,6 +9,7 @@ import warnings
 import os
 from src.model_architecture import UniversalFiberSensorModel
 from src.feature_extraction import UniversalFeatureVectorBuilder
+from src.signal_preprocessing import UniversalSignalPreprocessor, AdaptiveFeatureAggregator
 
 class FiberSensorInference:
     """Robust inference interface with validation and error handling"""
@@ -69,6 +70,10 @@ class FiberSensorInference:
         
         # Load UFV builder
         self.ufv_builder = UniversalFeatureVectorBuilder()
+        
+        # Initialize universal signal preprocessor (for universal mode)
+        self.universal_preprocessor = UniversalSignalPreprocessor()
+        self.adaptive_aggregator = AdaptiveFeatureAggregator()
         
         # Load class names from checkpoint if available, otherwise use defaults
         if isinstance(checkpoint, dict):
@@ -223,6 +228,88 @@ class FiberSensorInference:
         except Exception as e:
             raise RuntimeError(f"Prediction failed: {e}") from e
     
+    def predict_universal(self, raw_signal, original_sampling_rate=None, 
+                         is_multichannel=False, auto_preprocess=True, return_preprocessing_info=False):
+        """
+        Universal prediction mode - handles ANY sampling rate and signal length automatically.
+        
+        This is the key feature that makes the model truly universal. It automatically:
+        1. Resamples signals to the target rate (10kHz) if needed
+        2. Handles variable lengths (padding, truncation, or multi-window averaging)
+        3. Preserves signal quality through advanced preprocessing
+        
+        Args:
+            raw_signal: numpy array of ANY length at ANY sampling rate
+            original_sampling_rate: Original sampling rate in Hz. If None, attempts to estimate
+                                   or uses default (10kHz). For best results, provide actual rate.
+            is_multichannel: bool, whether signal is multi-channel
+            auto_preprocess: If True (default), automatically preprocesses signal.
+                           If False, uses original predict() method (requires proper input).
+            return_preprocessing_info: If True, returns preprocessing metadata
+        
+        Returns:
+            dict with predictions and confidence scores
+            If return_preprocessing_info=True: (prediction_dict, preprocessing_info_dict)
+        
+        Example:
+            # Works with any sampling rate and length!
+            signal_5khz = np.random.randn(5000)  # 5kHz, 1 second
+            pred = model.predict_universal(signal_5khz, original_sampling_rate=5000)
+            
+            signal_20khz = np.random.randn(20000)  # 20kHz, 1 second
+            pred = model.predict_universal(signal_20khz, original_sampling_rate=20000)
+            
+            signal_short = np.random.randn(100)  # Very short signal
+            pred = model.predict_universal(signal_short, original_sampling_rate=1000)
+        """
+        if not auto_preprocess:
+            # Fall back to original method (requires proper input)
+            if original_sampling_rate is None:
+                original_sampling_rate = 10000
+            return self.predict(raw_signal, original_sampling_rate, is_multichannel)
+        
+        # Universal preprocessing mode
+        try:
+            # Determine if multi-channel automatically
+            if len(raw_signal.shape) == 2 and raw_signal.shape[1] > 1:
+                is_multichannel = True
+            elif len(raw_signal.shape) > 2:
+                raise ValueError(f"Expected 1D or 2D signal, got shape {raw_signal.shape}")
+            
+            # If sampling rate not provided, use default (assumes target rate)
+            if original_sampling_rate is None:
+                original_sampling_rate = self.universal_preprocessor.TARGET_SAMPLING_RATE
+                warnings.warn(
+                    "Original sampling rate not provided. Assuming target rate (10kHz). "
+                    "For best results, provide actual sampling rate."
+                )
+            
+            # Preprocess signal to standard format
+            preprocessed_signal, preprocessing_info = self.universal_preprocessor.preprocess(
+                raw_signal,
+                original_sampling_rate=original_sampling_rate,
+                is_multichannel=is_multichannel,
+                return_info=True
+            )
+            
+            # Now use standard prediction with preprocessed signal
+            # Signal is now at target rate (10kHz) and target length (10000 samples)
+            prediction = self.predict(
+                preprocessed_signal,
+                sampling_rate=self.universal_preprocessor.TARGET_SAMPLING_RATE,
+                is_multichannel=is_multichannel
+            )
+            
+            # Add preprocessing info to prediction if requested
+            if return_preprocessing_info:
+                prediction['preprocessing_info'] = preprocessing_info
+                return prediction, preprocessing_info
+            
+            return prediction
+            
+        except Exception as e:
+            raise RuntimeError(f"Universal prediction failed: {e}") from e
+    
     def predict_batch(self, raw_signals, sampling_rate=10000, is_multichannel=False):
         """
         Predict on a batch of signals (more efficient)
@@ -282,5 +369,60 @@ class FiberSensorInference:
                 'sensor_type': self.sensor_types[min(sensor_idx, len(self.sensor_types)-1)],
                 'sensor_confidence': sensor_conf
             })
+        
+        return results
+    
+    def predict_batch_universal(self, raw_signals, original_sampling_rates=None, 
+                                is_multichannel=False, auto_preprocess=True):
+        """
+        Universal batch prediction - handles signals with different sampling rates/lengths.
+        
+        Args:
+            raw_signals: list of numpy arrays (can have different lengths/rates)
+            original_sampling_rates: list of sampling rates (one per signal) or single value
+                                   If None, assumes target rate for all
+            is_multichannel: bool, whether signals are multi-channel
+            auto_preprocess: If True, automatically preprocesses each signal
+        
+        Returns:
+            list of prediction dictionaries
+        """
+        if not isinstance(raw_signals, (list, tuple, np.ndarray)):
+            raise ValueError("raw_signals must be a list, tuple, or numpy array")
+        
+        # Handle single signal
+        if isinstance(raw_signals, np.ndarray) and len(raw_signals.shape) <= 2:
+            rate = original_sampling_rates if isinstance(original_sampling_rates, (int, float)) else None
+            return [self.predict_universal(raw_signals, rate, is_multichannel, auto_preprocess)]
+        
+        # Process batch
+        if original_sampling_rates is None:
+            original_sampling_rates = [None] * len(raw_signals)
+        elif isinstance(original_sampling_rates, (int, float)):
+            original_sampling_rates = [original_sampling_rates] * len(raw_signals)
+        
+        if len(original_sampling_rates) != len(raw_signals):
+            raise ValueError(
+                f"Number of sampling rates ({len(original_sampling_rates)}) "
+                f"must match number of signals ({len(raw_signals)})"
+            )
+        
+        results = []
+        for signal, rate in zip(raw_signals, original_sampling_rates):
+            try:
+                pred = self.predict_universal(signal, rate, is_multichannel, auto_preprocess)
+                results.append(pred)
+            except Exception as e:
+                warnings.warn(f"Failed to process signal in universal batch: {e}")
+                # Return default prediction on error
+                results.append({
+                    'event_type': 'background',
+                    'event_confidence': 0.0,
+                    'risk_score': 0.0,
+                    'damage_type': 'clean',
+                    'damage_confidence': 0.0,
+                    'sensor_type': 'DAS',
+                    'sensor_confidence': 0.0
+                })
         
         return results

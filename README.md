@@ -130,6 +130,8 @@ universal_fiber_model/
 │   └── inference.py             # Production-ready inference interface
 ├── models/
 │   └── trained_model.pth        # Pre-trained model weights
+├── training/
+│   └── Optics.ipynb             # Training notebook (Google Colab)
 ├── examples/
 │   └── usage_example.py         # Comprehensive usage examples
 ├── docs/
@@ -240,6 +242,23 @@ The model was trained on three datasets:
 - **OTDR**: 180 samples, 4 damage classes
 
 **Total Training Samples**: 22,054
+
+## Training
+
+The model was trained using Google Colab. The complete training notebook is available in `training/Optics.ipynb`. This notebook includes:
+
+- Model architecture definition
+- Data loading and preprocessing pipeline
+- Training hyperparameters and configuration
+- Training loop implementation
+- Model evaluation and accuracy calculations
+- Model checkpoint saving
+
+To reproduce the training:
+1. Open `training/Optics.ipynb` in Google Colab
+2. Upload your training datasets
+3. Run all cells to train the model
+4. The trained model will be saved as `trained_model.pth`
 
 ## API Reference
 

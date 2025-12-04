@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Optics Detection and Degradation Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Hero/Header Section -->
+    <section id="hero" class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">Universal Optics Detection and Degradation Tracker</h1>
+            <p class="hero-subtitle">
+                A universal deep learning model for analyzing fiber optic sensor signals from DAS, 
+                Phi-OTDR, and OTDR sensors. Performs simultaneous event classification, risk assessment, 
+                damage detection, and sensor type identification.
+            </p>
+        </div>
+    </section>
+
+    <!-- Standard Mode Input Section -->
+    <section id="standard-mode" class="input-section">
+        <div class="container">
+            <h2 class="section-title">Standard Mode</h2>
+            <p class="section-description">
+                For signals that match the training format. Provides optimal accuracy.
+            </p>
+            
+            <div class="requirements-box">
+                <h3>Requirements:</h3>
+                <ul>
+                    <li><strong>Sampling Rate:</strong> 10kHz (10000 Hz)</li>
+                    <li><strong>Signal Length:</strong> Minimum 512 samples</li>
+                    <li><strong>Format:</strong> CSV, TXT, or NumPy array (.npy)</li>
+                    <li><strong>Multi-channel:</strong> Optional (2D array)</li>
+                </ul>
+            </div>
+
+            <form id="standard-form" class="prediction-form">
+                <div class="form-group">
+                    <label for="standard-file">Upload Signal File:</label>
+                    <div class="file-upload-area" id="standard-upload-area">
+                        <input type="file" id="standard-file" name="file" accept=".csv,.txt,.npy" required>
+                        <div class="file-upload-text">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Drag & drop file here or click to browse</span>
+                            <span class="file-name" id="standard-file-name"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="standard-sampling-rate">Sampling Rate (Hz):</label>
+                        <input type="number" id="standard-sampling-rate" name="sampling_rate" 
+                               value="10000" min="100" max="1000000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="standard-multichannel" name="is_multichannel">
+                            <span>Multi-channel signal</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="submit-btn">Run Standard Prediction</button>
+                </div>
+            </form>
+
+            <div id="standard-preview" class="data-preview" style="display: none;">
+                <h4>Data Preview:</h4>
+                <pre id="standard-preview-content"></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Universal Mode Input Section -->
+    <section id="universal-mode" class="input-section">
+        <div class="container">
+            <h2 class="section-title">Universal Mode <span class="experimental-badge">Experimental</span></h2>
+            <p class="section-description">
+                Handles ANY sampling rate and signal length automatically. True universality.
+            </p>
+            
+            <div class="requirements-box">
+                <h3>Requirements:</h3>
+                <ul>
+                    <li><strong>Sampling Rate:</strong> ANY rate (100 Hz - 1 MHz)</li>
+                    <li><strong>Signal Length:</strong> ANY length (automatically handled)</li>
+                    <li><strong>Format:</strong> CSV, TXT, or NumPy array (.npy)</li>
+                    <li><strong>Note:</strong> Automatically resamples and normalizes</li>
+                </ul>
+            </div>
+
+            <form id="universal-form" class="prediction-form">
+                <div class="form-group">
+                    <label for="universal-file">Upload Signal File:</label>
+                    <div class="file-upload-area" id="universal-upload-area">
+                        <input type="file" id="universal-file" name="file" accept=".csv,.txt,.npy" required>
+                        <div class="file-upload-text">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Drag & drop file here or click to browse</span>
+                            <span class="file-name" id="universal-file-name"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="universal-sampling-rate">Original Sampling Rate (Hz):</label>
+                        <input type="number" id="universal-sampling-rate" name="original_sampling_rate" 
+                               placeholder="Enter any rate" min="100" max="1000000">
+                        <small>Leave empty to auto-detect (assumes 10kHz)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="universal-multichannel" name="is_multichannel">
+                            <span>Multi-channel signal</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="submit-btn">Run Universal Prediction</button>
+                </div>
+            </form>
+
+            <div id="universal-preview" class="data-preview" style="display: none;">
+                <h4>Data Preview:</h4>
+                <pre id="universal-preview-content"></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loading Section -->
+    <section id="loading-section" class="loading-section" style="display: none;">
+        <div class="container">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <h3 id="loading-status">Processing signal...</h3>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <p id="loading-message">Initializing model...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results-section" class="results-section" style="display: none;">
+        <div class="container">
+            <h2 class="section-title">Prediction Results</h2>
+            
+            <div class="results-grid" id="results-grid">
+                <!-- Metrics will be inserted here by JavaScript -->
+            </div>
+
+            <div class="results-actions">
+                <button id="download-results-btn" class="action-btn">Download Results (JSON)</button>
+                <button id="generate-dashboard-btn" class="action-btn primary">Generate Dashboard</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard-section" class="dashboard-section" style="display: none;">
+        <div class="container">
+            <h2 class="section-title">Interactive Dashboard</h2>
+            
+            <div class="dashboard-grid">
+                <!-- Risk Score Gauge -->
+                <div class="dashboard-card">
+                    <h3>Risk Score</h3>
+                    <canvas id="risk-gauge"></canvas>
+                </div>
+
+                <!-- Confidence Meters -->
+                <div class="dashboard-card">
+                    <h3>Confidence Scores</h3>
+                    <canvas id="confidence-chart"></canvas>
+                </div>
+
+                <!-- Event Type Distribution -->
+                <div class="dashboard-card">
+                    <h3>Event Classification</h3>
+                    <canvas id="event-chart"></canvas>
+                </div>
+
+                <!-- Signal Waveform -->
+                <div class="dashboard-card full-width">
+                    <h3>Signal Waveform</h3>
+                    <canvas id="signal-chart"></canvas>
+                </div>
+
+                <!-- Training Data Statistics -->
+                <div class="dashboard-card full-width">
+                    <h3>Model Performance Statistics</h3>
+                    <div class="stats-grid" id="training-stats">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Universal Optics Detection and Degradation Tracker</p>
+            <p>Universal Fiber Sensor Model - Production-Ready Implementation</p>
+        </div>
+    </footer>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Error</h3>
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+</body>
+</html>
+
+
+
+
+

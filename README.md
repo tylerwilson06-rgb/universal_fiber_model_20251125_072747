@@ -371,13 +371,14 @@ If you use this model in your research, please cite:
 
 ## Contact
 
-- Author: [Your Name]
-- Email: [Your Email]
-- GitHub: [Your GitHub]
+- Author: Tyler Wilson
+- Email: justtywilson@gmail.com
+- Author: Samuel Wilson
+- Email: justsamwilson@gmail.com
 
 ## License
 
-[Your License]
+N/A
 
 ## Acknowledgments
 

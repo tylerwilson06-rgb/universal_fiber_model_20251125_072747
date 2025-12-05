@@ -28,6 +28,7 @@ venv/
 ENV/
 env/
 .venv
+test_env/
 
 # IDEs
 .vscode/
@@ -88,4 +89,7 @@ colab_backup/
 verify_both_models.py
 verify_backup_stats.py
 verify_stats.py
+
+# Private documentation (not for public GitHub)
+tests/README.md
 

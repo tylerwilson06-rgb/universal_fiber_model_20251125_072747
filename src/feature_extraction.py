@@ -72,7 +72,7 @@ class MultiDomainFeatureExtractor:
             hop_length = max(1, int(0.01 * self.fs))
             if hop_length >= len(signal_window):
                 hop_length = max(1, len(signal_window) // 2)
-            
+        
             mfcc = librosa.feature.mfcc(
                 y=signal_window,
                 sr=self.fs,
@@ -81,7 +81,7 @@ class MultiDomainFeatureExtractor:
                 hop_length=hop_length,
                 n_mels=n_mels
             )
-            
+        
             # Handle edge case where mfcc might be empty or wrong shape
             if mfcc.size == 0 or mfcc.shape[0] != 40:
                 # Return zero-filled features
@@ -95,7 +95,7 @@ class MultiDomainFeatureExtractor:
                 mfcc_mean = np.mean(mfcc, axis=1)
                 delta_mean = np.mean(delta, axis=1)
                 delta2_mean = np.mean(delta2, axis=1)
-            
+        
             # Ensure exact dimension
             features = np.concatenate([mfcc_mean, delta_mean, delta2_mean])
             if len(features) != self.MFCC_DIM:
@@ -129,7 +129,7 @@ class MultiDomainFeatureExtractor:
                     mode='symmetric', 
                     maxlevel=maxlevel
                 )
-                
+        
                 features = []
                 nodes = wp.get_level(maxlevel, 'natural')
                 for node in nodes:
@@ -222,9 +222,7 @@ class MultiDomainFeatureExtractor:
                 autocorr = autocorr[len(autocorr)//2:]
                 if len(autocorr) > 0 and autocorr[0] > 1e-10:
                     autocorr = autocorr / autocorr[0]
-                    lag1_corr = autocorr[1] if len(autocorr) > 1 else 0
-                else:
-                    lag1_corr = 0
+                lag1_corr = autocorr[1] if len(autocorr) > 1 else 0
             else:
                 lag1_corr = 0
             

@@ -38,10 +38,10 @@ class FiberSensorInference:
         
         # Load model with error handling
         try:
-            checkpoint = torch.load(model_path, map_location=device)
+        checkpoint = torch.load(model_path, map_location=device)
             
             # Initialize model
-            self.model = UniversalFiberSensorModel()
+        self.model = UniversalFiberSensorModel()
             
             # Try to load state dict (handle different checkpoint formats)
             if isinstance(checkpoint, dict):
@@ -62,8 +62,8 @@ class FiberSensorInference:
             if unexpected_keys:
                 warnings.warn(f"Unexpected keys in state dict: {unexpected_keys[:5]}... (showing first 5)")
             
-            self.model.eval()
-            self.model.to(device)
+        self.model.eval()
+        self.model.to(device)
             
         except Exception as e:
             raise RuntimeError(f"Failed to load model from {model_path}: {e}") from e
@@ -170,36 +170,36 @@ class FiberSensorInference:
             raise ValueError(f"Expected 1D or 2D signal, got shape {raw_signal.shape}")
         
         try:
-            # Extract UFV
-            ufv = self.ufv_builder.build_ufv(raw_signal, sampling_rate, is_multichannel)
-            
+        # Extract UFV
+        ufv = self.ufv_builder.build_ufv(raw_signal, sampling_rate, is_multichannel)
+        
             # Validate UFV dimension
             if len(ufv) != self.UFV_DIM:
                 raise RuntimeError(
                     f"UFV dimension mismatch: expected {self.UFV_DIM}, got {len(ufv)}"
                 )
             
-            # Normalize
+        # Normalize
             ufv = self._normalize_ufv(ufv)
-            
-            # Convert to tensor
-            ufv_tensor = torch.FloatTensor(ufv).unsqueeze(0).to(self.device)
-            
-            # Inference
-            with torch.no_grad():
-                outputs = self.model(ufv_tensor, head='all')
-            
+        
+        # Convert to tensor
+        ufv_tensor = torch.FloatTensor(ufv).unsqueeze(0).to(self.device)
+        
+        # Inference
+        with torch.no_grad():
+            outputs = self.model(ufv_tensor, head='all')
+        
             # Parse outputs with error handling
             event_logits = outputs['event_logits'][0]
             event_idx = event_logits.argmax().item()
             event_conf = torch.softmax(event_logits, dim=0)[event_idx].item()
-            
-            risk_score = outputs['risk_score'][0][0].item()
-            
+        
+        risk_score = outputs['risk_score'][0][0].item()
+        
             damage_logits = outputs['damage_logits'][0]
             damage_idx = damage_logits.argmax().item()
             damage_conf = torch.softmax(damage_logits, dim=0)[damage_idx].item()
-            
+        
             sensor_logits = outputs['sensor_logits'][0]
             sensor_idx = sensor_logits.argmax().item()
             sensor_conf = torch.softmax(sensor_logits, dim=0)[sensor_idx].item()
@@ -214,16 +214,16 @@ class FiberSensorInference:
             if sensor_idx >= len(self.sensor_types):
                 warnings.warn(f"Sensor index {sensor_idx} out of range. Using index 0.")
                 sensor_idx = 0
-            
-            return {
-                'event_type': self.event_classes[event_idx],
-                'event_confidence': event_conf,
-                'risk_score': risk_score,
-                'damage_type': self.damage_classes[damage_idx],
-                'damage_confidence': damage_conf,
+        
+        return {
+            'event_type': self.event_classes[event_idx],
+            'event_confidence': event_conf,
+            'risk_score': risk_score,
+            'damage_type': self.damage_classes[damage_idx],
+            'damage_confidence': damage_conf,
                 'sensor_type': self.sensor_types[sensor_idx],
                 'sensor_confidence': sensor_conf
-            }
+        }
             
         except Exception as e:
             raise RuntimeError(f"Prediction failed: {e}") from e

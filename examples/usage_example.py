@@ -30,14 +30,14 @@ def main():
     except Exception as e:
         print(f"Error loading model: {e}")
         return
-    
+
     # Example 1: DAS-like signal (single channel)
     print("=" * 60)
     print("Example 1: DAS Signal (Single Channel)")
     print("=" * 60)
     try:
-        das_signal = np.random.randn(10000)  # 1 second at 10kHz
-        prediction = model.predict(das_signal, sampling_rate=10000)
+das_signal = np.random.randn(10000)  # 1 second at 10kHz
+prediction = model.predict(das_signal, sampling_rate=10000)
         
         print(f"  Event Type: {prediction['event_type']}")
         print(f"  Event Confidence: {prediction['event_confidence']:.2%}")
@@ -48,39 +48,39 @@ def main():
         print(f"  Sensor Confidence: {prediction['sensor_confidence']:.2%}")
     except Exception as e:
         print(f"  Error: {e}")
-    print()
-    
-    # Example 2: Multi-channel signal (Phi-OTDR-like)
+print()
+
+# Example 2: Multi-channel signal (Phi-OTDR-like)
     print("=" * 60)
     print("Example 2: Multi-channel Signal (Phi-OTDR-like)")
     print("=" * 60)
     try:
-        phi_signal = np.random.randn(10000, 12)  # 12 channels
-        prediction = model.predict(phi_signal, sampling_rate=10000, is_multichannel=True)
+phi_signal = np.random.randn(10000, 12)  # 12 channels
+prediction = model.predict(phi_signal, sampling_rate=10000, is_multichannel=True)
         
         print(f"  Event Type: {prediction['event_type']}")
         print(f"  Event Confidence: {prediction['event_confidence']:.2%}")
         print(f"  Risk Score: {prediction['risk_score']:.2%}")
         print(f"  Damage Type: {prediction['damage_type']}")
-        print(f"  Sensor Type: {prediction['sensor_type']}")
+print(f"  Sensor Type: {prediction['sensor_type']}")
         print(f"  Sensor Confidence: {prediction['sensor_confidence']:.2%}")
     except Exception as e:
         print(f"  Error: {e}")
-    print()
-    
-    # Example 3: Real-time monitoring loop
+print()
+
+# Example 3: Real-time monitoring loop
     print("=" * 60)
     print("Example 3: Real-time Monitoring Loop")
     print("=" * 60)
     try:
-        for i in range(5):
-            signal = np.random.randn(10000)
-            prediction = model.predict(signal, sampling_rate=10000)
-            
-            if prediction['risk_score'] > 0.7:
+for i in range(5):
+    signal = np.random.randn(10000)
+    prediction = model.predict(signal, sampling_rate=10000)
+    
+    if prediction['risk_score'] > 0.7:
                 print(f"  ⚠️  HIGH RISK: {prediction['event_type']} "
                       f"(Risk: {prediction['risk_score']:.2%})")
-            else:
+    else:
                 print(f"  ✅ Normal: {prediction['event_type']} "
                       f"(Risk: {prediction['risk_score']:.2%})")
     except Exception as e:

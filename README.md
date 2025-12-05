@@ -154,10 +154,10 @@ The model expects a 204-dimensional feature vector extracted from raw sensor sig
   - Spatial features: 4 (for multi-channel data)
 
 - **Proprietary Features (4)**:
-  1. **RBE** - Rayleigh Backscatter Entropy: Measures signal disorder
-  2. **DESI** - Dynamic Event Shape Index: Characterizes transient shapes
-  3. **SCR** - Spatial Coherence Ratio: Multi-channel correlation
-  4. **BSI** - Backscatter Stability Index: Signal variance
+1. **RBE** - Rayleigh Backscatter Entropy: Measures signal disorder
+2. **DESI** - Dynamic Event Shape Index: Characterizes transient shapes
+3. **SCR** - Spatial Coherence Ratio: Multi-channel correlation
+4. **BSI** - Backscatter Stability Index: Signal variance
 
 ### Neural Network Architecture
 
@@ -305,6 +305,7 @@ The implementation includes comprehensive error handling:
 2. **Signal Length**: Minimum recommended length is 512 samples. Shorter signals will be padded with zeros.
 3. **Multi-Channel**: Automatically detected for 2D arrays with shape (samples, channels).
 4. **GPU Usage**: Automatically uses GPU if available. Set `device='cpu'` to force CPU usage.
+5. **Normalization**: The model includes embedded normalization statistics from training. The inference engine automatically uses these for optimal accuracy.
 
 ### Universal Mode
 

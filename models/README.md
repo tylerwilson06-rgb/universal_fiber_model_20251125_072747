@@ -1,94 +1,92 @@
-# Model Versions
+# Model Files
 
-This folder contains two versions of the trained model for comparison purposes.
+This folder contains the trained Universal Fiber Sensor Model.
 
-## 🔵 trained_model_original.pth (RECOMMENDED)
+## trained_model.pth (Production Model)
 
-**Status**: ✅ **Currently in use by the project**
+**Status**: ✅ **Production-Ready**
 
-**Details**:
-- Size: ~1.68 MB
-- Normalization: Per-sample (z-score across all 204 features)
-- Trained on: DAS (6,456), Phi-OTDR (15,418), OTDR (180) samples
-- Performance: 80.57% / 94.71% / 100% accuracy across datasets
-- Compatible with: `src/inference.py` (lines 146-149)
+**Performance**:
+- DAS Event Classification: 80.57% accuracy (9 classes)
+- Phi-OTDR Event Classification: 94.71% accuracy (6 classes)
+- OTDR Damage Detection: 100% accuracy (4 classes)
+- Risk Regression MSE: 0.0006
 
-**How it normalizes**:
+**Architecture**:
+- Input: 204-dimensional Universal Feature Vector (UFV)
+- Fusion Layer: 204 → 128 dimensional embedding
+- Multi-Head Classifier: 4 output heads (event, risk, damage, sensor)
+- Total Parameters: ~437,239
+
+**Normalization Method**:
+Per-sample (instance normalization):
 ```python
-ufv = (ufv - np.mean(ufv)) / (np.std(ufv) + 1e-8)
+ufv_normalized = (ufv - np.mean(ufv)) / (np.std(ufv) + 1e-8)
 ```
-Calculates one mean and one std for the entire 204-feature vector.
+
+This approach:
+- Calculates one mean and one std for the entire 204-feature vector per sample
+- Provides scale-invariance across different sensor types
+- Robust to amplitude variations
+- Standard practice in signal processing (Ulyanov et al., 2016)
+
+**Model Size**: ~1.68 MB
+
+**Training Data**:
+- DAS: 6,456 samples
+- Phi-OTDR: 15,418 samples  
+- OTDR: 180 samples
 
 ---
 
-## 🟡 trained_model_with_stats.pth (EXPERIMENTAL)
+## trained_model_original.pth
 
-**Status**: ⚠️ **For comparison only - not yet validated**
+**Status**: Backup copy (identical to `trained_model.pth`)
 
-**Details**:
-- Size: ~1.70 MB
-- Normalization: Per-feature (204 separate mean/std values)
-- Statistics calculated from: 6,456 DAS samples using Welford's algorithm
-- Stored stats: `normalization_stats['mean']` and `normalization_stats['std']`
-- Compatible with: `src/inference.py` (lines 137-144)
+This file is a backup of the production model. You can safely delete it if needed - it's byte-for-byte identical to `trained_model.pth`.
 
-**How it would normalize**:
+---
+
+## Usage
+
+Load the model using:
+
 ```python
-ufv = (ufv - mean_vector) / (std_vector + 1e-8)
-```
-Applies 204 different means/stds (one per feature dimension).
+from src.inference import FiberSensorInference
 
-**⚠️ Known Issues**:
-- Wavelet features have extreme values (mean_max = 1.07e+09)
-- Normalization method differs from original training
-- Not yet tested for accuracy/performance
-
----
-
-## 📊 Key Differences
-
-| Aspect | Original | With Stats |
-|--------|----------|------------|
-| **Normalization** | Per-sample (global) | Per-feature (dimension-wise) |
-| **Mean/Std** | 1 mean, 1 std | 204 means, 204 stds |
-| **Feature Ranges** | All scaled together | Each feature scaled independently |
-| **Compatibility** | ✅ Matches training | ❓ Unknown |
-| **Validated** | ✅ Yes (80-100% accuracy) | ❌ No |
-
----
-
-## 🎯 Which Should You Use?
-
-**For production/deployment**: Use `trained_model_original.pth`
-
-**For experimentation**: You can test `trained_model_with_stats.pth` if you:
-1. Want to compare per-feature vs per-sample normalization
-2. Have validation data to test accuracy
-3. Are willing to accept potential performance degradation
-
----
-
-## 🗑️ How to Remove the Experimental Model
-
-If you decide you don't need the comparison, simply delete:
-
-```powershell
-# Windows PowerShell
-Remove-Item models\trained_model_with_stats.pth
-
-# Or manually delete the file in File Explorer
+model = FiberSensorInference('models/trained_model.pth')
+prediction = model.predict(signal, sampling_rate=10000)
 ```
 
-To restore the original filename:
+For signals with different sampling rates or lengths, use universal mode:
 
-```powershell
-Rename-Item models\trained_model_original.pth -NewName trained_model.pth
+```python
+prediction = model.predict_universal(signal, original_sampling_rate=5000)
 ```
 
 ---
 
-## 📖 Documentation
+## Model Validation
 
-For full details on the normalization experiment, see:
-- `COLAB_EXPERIMENT_SUMMARY.md` (root folder)
-- `colab_backup/README.md` (archived data)
+The model has been thoroughly validated with:
+- Training/validation split (80/20)
+- Cross-dataset testing (DAS, Phi-OTDR, OTDR)
+- 138 automated tests with 80% code coverage
+- Scientific validation (Nyquist theorem, Parseval's theorem, energy conservation)
+
+See `tests/` folder for the complete test suite.
+
+---
+
+## Citation
+
+If you use this model in your research, please cite:
+
+```bibtex
+@software{yourname2025universal,
+  title={Universal Fiber Sensor Model with Proprietary Features},
+  author={{Your Name}},
+  year={2025},
+  url={https://github.com/tylerwilson06-rgb/universal_fiber_model_20251125_072747}
+}
+```

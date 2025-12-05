@@ -45,8 +45,7 @@ test_env/
 *.pth
 *.pt
 !models/trained_model.pth  # Keep the trained model
-!models/trained_model_original.pth  # Keep original for comparison
-!models/trained_model_with_stats.pth  # Keep experimental version for comparison
+!models/trained_model_original.pth  # Keep backup copy
 
 # Testing
 .pytest_cache/
@@ -81,14 +80,6 @@ push_to_github.bat
 WHY_EMPTY_AND_HOW_TO_FIX.md
 EXTENDED_README.md
 IMPLEMENTATION_SUMMARY.md
-
-# Colab experiment backup (archived, not for production)
-colab_backup/
-
-# Verification scripts (temporary)
-verify_both_models.py
-verify_backup_stats.py
-verify_stats.py
 
 # Private documentation (not for public GitHub)
 tests/README.md
